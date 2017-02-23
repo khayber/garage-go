@@ -14,6 +14,13 @@ It also implements a simple Telegram chat bot that has the same basic features.
 There is also a monitor to check if the door has been open for longer than 1 hour,
 and closes it if that time is exceeded.
 
+## Configuration
+Some of the configuration is currently hardcoded.  Specifically the GPIO pins and the automatic close feature.  These need to have external configuration.
+
+The REST API requires server.crt and server.key PEM files for HTTPS.  It also uses BasicAuth authentication and requires $USER and $PASS environment variables to be set.
+
+The Telegram bot requires a $TOKEN environment variable to be set.  Get this from Telegram when you set up your bot with Botfather.
+
 ## Raspberry Pi GPIO
 I'm using the github.com/stianeikeland/go-rpio library for accessing the GPIO pins on the pi.
 
