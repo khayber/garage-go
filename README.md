@@ -22,7 +22,7 @@ The REST API requires server.crt and server.key PEM files for HTTPS.  It also us
 The Telegram bot requires a $TOKEN environment variable to be set.  Get this from Telegram when you set up your bot with Botfather.
 
 ## Raspberry Pi GPIO
-I'm using the github.com/stianeikeland/go-rpio library for accessing the GPIO pins on the pi.
+I'm using https://github.com/stianeikeland/go-rpio for accessing the GPIO pins on the pi.
 
 One GPIO pin is set to Output and is connected to an NPN transistor with a built-in bias resistor.  The emitter/collector are connected across the remote's switch that opens/closes the door.  When the output pin is set Low the circuit is closed.  I hold it closed for a half second before setting it High again.
 
@@ -35,7 +35,7 @@ The monitor goroutine checks the door status every few seconds and records the t
 ## Telegram Bot
 I was looking for a good/secure method to control this thing and saw multiple projects using Telegram's bot API.  It was really simple to get it working.
 
-I'm using gopkg.in/telegram-bot-api.v4 for the client API.
+I'm using https://github.com/go-telegram-bot-api/telegram-bot-api for the client API.
 
 It currently supports /start, /status, /open and /close actions.  I can envision hooking up a pi camera to this and getting a picture of the state of the door as well as sending a notification whenever the door state changes or the automatic close feature activates.  I'm also planning on learning how to set up custom a ResponseKeyboard.
 
