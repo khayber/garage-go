@@ -35,6 +35,8 @@ The monitor goroutine checks the door status every few seconds and records the t
 ## Telegram Bot
 I was looking for a good/secure method to control this thing and saw multiple projects using Telegram's bot API.  It was really simple to get it working.
 
+I'm using gopkg.in/telegram-bot-api.v4 for the client API.
+
 It currently supports /start, /status, /open and /close actions.  I can envision hooking up a pi camera to this and getting a picture of the state of the door as well as sending a notification whenever the door state changes or the automatic close feature activates.  I'm also planning on learning how to set up custom a ResponseKeyboard.
 
 ## Pictures and Screenshots
