@@ -7,24 +7,18 @@ import (
     "github.com/stianeikeland/go-rpio"
 )
 
-
-const (
-    CONTROL_PIN_NUM = 4  //physical pin 7
-    SENSOR_PIN_NUM  = 17 //physical pin 11
-)
-
 // time we detected door open
 var open_time time.Time = time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
 
 var control_pin rpio.Pin
 var sensor_pin rpio.Pin
 
-func setup() {
+func setup(control_pin_num, sensor_pin_num int) {
     rpio.Open()
-    control_pin = rpio.Pin(CONTROL_PIN_NUM)
+    control_pin = rpio.Pin(control_pin_num)
     control_pin.Output()
 
-    sensor_pin = rpio.Pin(SENSOR_PIN_NUM)
+    sensor_pin = rpio.Pin(sensor_pin_num)
     sensor_pin.Input()
     sensor_pin.PullUp()
 }
@@ -55,11 +49,13 @@ func status() bool {
     }
 }
 
-func monitor() {
+func monitor(autoclose bool, closetime float64) {
     for true {
-        if status() && time.Since(open_time).Hours() > 1 {
-            log.Printf("Door has been open for > 1 hour.  Closing door...")
-            toggle_door()
+        if status() && time.Since(open_time).Hours() > closetime {
+            log.Printf("Door has been open for > 1 hour.")
+            if autoclose {
+                toggle_door()
+            }
         }
         time.Sleep(5000 * time.Millisecond)
     }

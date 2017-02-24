@@ -1,7 +1,6 @@
 package main
 
 import (
-    "os"
     "fmt"
     "log"
     "strings"
@@ -11,9 +10,8 @@ import (
 )
 
 
-var USER = os.Getenv("USER")
-var PASS = os.Getenv("PASS")
-
+var USER = ""
+var PASS = ""
 
 func authenticate(w http.ResponseWriter, r *http.Request) bool {
     auth_header := r.Header["Authorization"]
@@ -60,12 +58,17 @@ func Close(w http.ResponseWriter, r *http.Request) {
     logger(r)
 }
 
-func rest() {
+func rest(user, pass string, port int, use_ssl bool) {
+    USER = user
+    PASS = pass
     router := mux.NewRouter().StrictSlash(true)
     router.HandleFunc("/door", Door).Methods("GET")
     router.HandleFunc("/door/close", Close).Methods("POST")
     router.HandleFunc("/door/open", Open).Methods("POST")
-    //log.Fatal(http.ListenAndServe(":8080", router))
-    log.Fatal(http.ListenAndServeTLS(":8443", "server.crt", "server.key", router))
+    if use_ssl {
+        log.Fatal(http.ListenAndServeTLS(fmt.Sprintf(":%v", port), "server.crt", "server.key", router))
+    } else {
+        log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), router))
+    }
 }
 
