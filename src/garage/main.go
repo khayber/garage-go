@@ -24,7 +24,6 @@ var monitor_closetime = flag.Float64("closetime", 60, "Number of minutes after w
 func main() {
     flag.Parse()
     var wg sync.WaitGroup
-    wg.Add(1)
 
     setup(*gpio_control_pin, *gpio_sensor_pin)
 
@@ -32,6 +31,7 @@ func main() {
 
     if *telegram_enable {
         go tgbot(*telegram_token)
+        wg.Add(1) //make sure we don't exit if the rest server isn't configured
     }
     if *rest_enable {
         rest(*rest_user, *rest_pass, *rest_port, *rest_ssl)
