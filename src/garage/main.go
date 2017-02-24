@@ -2,6 +2,7 @@ package main
 
 import (
     "flag"
+    "sync"
 )
 
 var gpio_control_pin = flag.Int("control", 4, "GPIO Control Pin")
@@ -22,6 +23,8 @@ var monitor_closetime = flag.Float64("closetime", 60, "Number of minutes after w
 
 func main() {
     flag.Parse()
+    var wg sync.WaitGroup
+    wg.Add(1)
 
     setup(*gpio_control_pin, *gpio_sensor_pin)
 
@@ -34,5 +37,6 @@ func main() {
         rest(*rest_user, *rest_pass, *rest_port, *rest_ssl)
     }
 
+    wg.Wait()
     cleanup()
 }
