@@ -44,6 +44,3 @@ Put some of those here...
 
 ## TODO
 * Connect to IFTTT so I can control using Alexa or Google Home
-* More configuration settings (environment variables and/or config file)
-* Enable/disable REST or Telegram Bot features
-* Configure Automatic close feature (off, notify, close)
