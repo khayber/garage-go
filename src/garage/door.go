@@ -65,24 +65,24 @@ func check_door() string {
     if status() {
         return fmt.Sprintf("Door has been Open for %f minutes", time.Since(open_time).Minutes())
     } else {
-        return fmt.Sprintf("Door is Closed")
+        return "Door is Closed"
     }
 }
 
 func open_door() string {
     if is_open() {
-        return fmt.Sprintf("Door is already Open")
+        return "Door is already Open"
     } else {
         toggle_door()
-        return fmt.Sprintf("Opening...")
+        return "Opening..."
     }
 }
 
 func close_door() string {
     if !is_open() {
-        return fmt.Sprintf("Door is already Closed")
+        return "Door is already Closed"
     } else {
         toggle_door()
-        return fmt.Sprintf("Closing...")
+        return "Closing..."
     }
 }
