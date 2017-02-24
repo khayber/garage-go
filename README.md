@@ -15,11 +15,13 @@ There is also a monitor to check if the door has been open for longer than 1 hou
 and closes it if that time is exceeded.
 
 ## Configuration
-Some of the configuration is currently hardcoded.  Specifically the GPIO pins and the automatic close feature.  These need to have external configuration.
+Using golang's 'flag' module for command line configuration.  Use -h or --help for a listing.
 
-The REST API requires server.crt and server.key PEM files for HTTPS.  It also uses BasicAuth authentication and requires $USER and $PASS environment variables to be set.
+If you only want Telegram support use:  `./garage -telegram -token "your token"`
+See Telegram's Botfather for how to create your own bot and get a token.
 
-The Telegram bot requires a $TOKEN environment variable to be set.  Get this from Telegram when you set up your bot with Botfather.
+If you want the REST API use: `./garage -rest -user "username" -pass "password"`
+If you use the -ssl flag you will need to create the server.crt/server,key files.
 
 ## Raspberry Pi GPIO
 I'm using https://github.com/stianeikeland/go-rpio for accessing the GPIO pins on the pi.
