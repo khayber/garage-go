@@ -23,6 +23,29 @@ See Telegram's Botfather for how to create your own bot and get a token.
 If you want the REST API use: `./garage -rest -user "username" -pass "password"`
 If you use the -ssl flag you will need to create the server.crt/server,key files.
 
+### systemd
+The service can be controlled by systemd with a service file such as the following
+```
+/lib/systemd/system/garage.service
+[Unit]
+Description=Garage Door Control/Monitor service
+After=network.target auditd.service
+
+[Service]
+EnvironmentFile=-/etc/default/garage
+ExecStart=/usr/bin/garage $OPTS
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then put your preferred options in /etc/default/garage like this:
+
+```
+OPTS=-telegram -token your-token-here
+```
+
 ## Raspberry Pi GPIO
 I'm using https://github.com/stianeikeland/go-rpio for accessing the GPIO pins on the pi.
 
