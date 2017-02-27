@@ -51,9 +51,10 @@ func tgbot(token string) {
                 msg := close_door()
                 bot.SendMessage(message.Chat, msg, nil)
             default:
-                msg := "???"
-                //message.ReplyToId = message.MessageID
-                bot.SendMessage(message.Chat, msg, nil)
+                msg := "huh???"
+                bot.SendMessage(message.Chat, msg, &telebot.SendOptions{
+                    ReplyTo: message,
+                })
         }
     }
 }
