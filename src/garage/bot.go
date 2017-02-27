@@ -2,50 +2,58 @@ package main
 
 import (
     "log"
-    "gopkg.in/telegram-bot-api.v4"
+    "time"
+    "github.com/tucnak/telebot"
 )
 
 func tgbot(token string) {
-    bot, err := tgbotapi.NewBotAPI(token)
+    bot, err := telebot.NewBot(token)
     if err != nil {
         log.Panic(err)
     }
 
-    bot.Debug = DEBUG
+    //bot.Debug = DEBUG
+    log.Printf("Authorized on account %v", bot.Identity)
 
-    log.Printf("Authorized on account %s", bot.Self.UserName)
+    messages := make(chan telebot.Message, 100)
+    bot.Listen(messages, 60 * time.Second)
 
-    u := tgbotapi.NewUpdate(0)
-    u.Timeout = 60
-
-    updates, err := bot.GetUpdatesChan(u)
-
-    for update := range updates {
-        if update.Message == nil {
+    for message := range messages {
+        if message.Text == "" {
             continue
         }
 
-        log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+        log.Printf("[%s] %s", message.Sender.Username, message.Text)
 
-        switch cmd := update.Message.Text; cmd {
+        switch cmd := message.Text; cmd {
             case "/start":
-                //TODO - create a custom keyboard
-                msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Welcome.")
-                bot.Send(msg)
-            case "/check": fallthrough
+                bot.SendMessage(message.Chat, "Welcome", &telebot.SendOptions{
+                    ReplyMarkup: telebot.ReplyMarkup{
+                        ForceReply: true,
+                        Selective: true,
+                        CustomKeyboard: [][]string{
+                            []string{"Open"},
+                            []string{"Close"},
+                            []string{"Status"},
+                        },
+                    },
+                })
+            case "Status": fallthrough
             case "/status":
-                msg := tgbotapi.NewMessage(update.Message.Chat.ID, check_door())
-                bot.Send(msg)
+                msg := check_door()
+                bot.SendMessage(message.Chat, msg, nil)
+            case "Open": fallthrough
             case "/open":
-                msg := tgbotapi.NewMessage(update.Message.Chat.ID, open_door())
-                bot.Send(msg)
+                msg := open_door()
+                bot.SendMessage(message.Chat, msg, nil)
+            case "Close": fallthrough
             case "/close":
-                msg := tgbotapi.NewMessage(update.Message.Chat.ID, close_door())
-                bot.Send(msg)
+                msg := close_door()
+                bot.SendMessage(message.Chat, msg, nil)
             default:
-                msg := tgbotapi.NewMessage(update.Message.Chat.ID, "???")
-                msg.ReplyToMessageID = update.Message.MessageID
-                bot.Send(msg)
+                msg := "???"
+                //message.ReplyToId = message.MessageID
+                bot.SendMessage(message.Chat, msg, nil)
         }
     }
 }
