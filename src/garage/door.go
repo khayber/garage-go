@@ -55,13 +55,13 @@ func status() bool {
 
 func monitor(autoclose bool, closetime float64) {
     for true {
-        if status() && time.Since(open_time).Hours() > closetime {
-            log.Printf("Door has been open for > 1 hour.")
+        if status() && (time.Since(open_time).Minutes() > closetime) {
+            log.Printf("Door has been open too long, auto-closing.")
             if autoclose {
                 toggle_door()
             }
         }
-        time.Sleep(5000 * time.Millisecond)
+        time.Sleep(20000 * time.Millisecond)
     }
 }
 
