@@ -30,7 +30,7 @@ func cleanup() {
 func toggle_door() {
     log.Printf("toggle_door")
     control_pin.Low()
-    time.Sleep(500 * time.Millisecond)
+    time.Sleep(1000 * time.Millisecond)
     control_pin.High()
 }
 
