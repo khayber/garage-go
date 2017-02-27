@@ -1,30 +1,25 @@
 export GOPATH=${PWD}
 
-all: get build install
+all: get build
 
 pi0: export GOARCH=arm
 pi0: export GOOS=linux
 pi0: export GOARM=5
-pi0: build install
+pi0: get build
 
 pi3: export GOARCH=arm
 pi3: export GOOS=linux
 pi3: export GOARM=7
-pi3: build install
+pi3: get build
 
 get:
-	go get garage
+	go get -d
 
 build:
-	go build garage
-
-install:
-	go install garage
+	go build
 
 clean:
-	go clean garage
+	go clean
 
 purge: clean
-	-rm garage
-	-rm -rf bin/*
-	-rm -rf pkg/*
+	-rm -rf src 
