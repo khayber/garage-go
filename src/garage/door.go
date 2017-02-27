@@ -7,13 +7,8 @@ import (
     "github.com/stianeikeland/go-rpio"
 )
 
-// complementary function to time.IsZero() - sets time to 'zero' values
-func ZeroTime() time.Time {
-    return time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
-}
-
 // time we detected door open
-var open_time time.Time = ZeroTime()
+var open_time time.Time = time.Time{}
 
 var control_pin rpio.Pin
 var sensor_pin rpio.Pin
@@ -53,7 +48,7 @@ func status() bool {
         }
         return true
     } else {
-        open_time = ZeroTime()
+        open_time = time.Time{}
         return false
     }
 }
