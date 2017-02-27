@@ -25,6 +25,6 @@ clean:
 	go clean garage
 
 purge: clean
-	rm garage
-	rm -rf bin/*
-	rm -rf pkg/*
+	-rm garage
+	-rm -rf bin/*
+	-rm -rf pkg/*
