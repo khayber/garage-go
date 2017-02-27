@@ -20,9 +20,12 @@ var telegram_token = flag.String("token", "Your Token Here", "Telegram Bot API T
 var monitor_autoclose = flag.Bool("autoclose", false, "Enable Auto Close feature")
 var monitor_closetime = flag.Float64("closetime", 60, "Number of minutes after which door is closed")
 
+var debug = flag.Bool("debug", false, "Enable debug logging")
+var DEBUG = false
 
 func main() {
     flag.Parse()
+    DEBUG = *debug
     var wg sync.WaitGroup
 
     setup(*gpio_control_pin, *gpio_sensor_pin)

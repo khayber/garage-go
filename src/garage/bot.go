@@ -11,7 +11,7 @@ func tgbot(token string) {
         log.Panic(err)
     }
 
-    bot.Debug = false
+    bot.Debug = DEBUG
 
     log.Printf("Authorized on account %s", bot.Self.UserName)
 

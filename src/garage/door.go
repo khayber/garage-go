@@ -28,6 +28,7 @@ func cleanup() {
 }
 
 func toggle_door() {
+    log.Printf("toggle_door")
     control_pin.Low()
     time.Sleep(500 * time.Millisecond)
     control_pin.High()
@@ -39,8 +40,11 @@ func is_open() bool {
 
 func status() bool {
     if is_open() {
+        if DEBUG {
+            fmt.Printf("Door has been Open for %v\n", time.Now().Round(time.Second).Sub(open_time))
+        }
         if open_time.IsZero() {
-            open_time = time.Now()
+            open_time = time.Now().Round(time.Second)
         }
         return true
     } else {
@@ -63,7 +67,7 @@ func monitor(autoclose bool, closetime float64) {
 
 func check_door() string {
     if status() {
-        return fmt.Sprintf("Door has been Open for %f minutes", time.Since(open_time).Minutes())
+        return fmt.Sprintf("Door has been Open for %v", time.Now().Round(time.Second).Sub(open_time))
     } else {
         return "Door is Closed"
     }
