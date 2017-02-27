@@ -29,6 +29,7 @@ func main() {
     var wg sync.WaitGroup
 
     setup(*gpio_control_pin, *gpio_sensor_pin)
+    defer cleanup()
 
     go monitor(*monitor_autoclose, *monitor_closetime)
 
@@ -41,5 +42,4 @@ func main() {
     }
 
     wg.Wait()
-    cleanup()
 }
