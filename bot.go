@@ -6,25 +6,27 @@ import (
     "github.com/tucnak/telebot"
 )
 
-func tgbot(token string) {
+func tgbot(token string, username string) {
     bot, err := telebot.NewBot(token)
     if err != nil {
         log.Panic(err)
     }
 
-    //bot.Debug = DEBUG
     log.Printf("Authorized on account %v", bot.Identity)
 
     messages := make(chan telebot.Message, 100)
     bot.Listen(messages, 60 * time.Second)
 
     for message := range messages {
-        if message.Text == "" {
-            continue
+        if DEBUG {
+            log.Printf("messsage %v", message)
         }
 
         log.Printf("[%s] %s", message.Sender.Username, message.Text)
-
+        if message.Sender.Username != username {
+            log.Printf("ERROR invalid user")
+            continue;
+        }
         switch cmd := message.Text; cmd {
             case "/start":
                 bot.SendMessage(message.Chat, "Welcome", &telebot.SendOptions{
