@@ -34,23 +34,24 @@ func tgbot(token string, username string) {
                         ForceReply: true,
                         Selective: true,
                         CustomKeyboard: [][]string{
-                            []string{"Open"},
-                            []string{"Close"},
-                            []string{"Status"},
+                            []string{"/status"},
+                            []string{"/open"},
+                            []string{"/close"},
+                            []string{"/hold"},
                         },
                     },
                 })
-            case "Status": fallthrough
             case "/status":
                 msg := check_door()
                 bot.SendMessage(message.Chat, msg, nil)
-            case "Open": fallthrough
             case "/open":
                 msg := open_door()
                 bot.SendMessage(message.Chat, msg, nil)
-            case "Close": fallthrough
             case "/close":
                 msg := close_door()
+                bot.SendMessage(message.Chat, msg, nil)
+            case "/hold":
+                msg := hold_door()
                 bot.SendMessage(message.Chat, msg, nil)
             default:
                 msg := "huh???"

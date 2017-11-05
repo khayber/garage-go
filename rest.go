@@ -58,6 +58,14 @@ func Close(w http.ResponseWriter, r *http.Request) {
     logger(r)
 }
 
+func Hold(w http.ResponseWriter, r *http.Request) {
+    if authenticate(w, r) {
+        msg := hold_door()
+        fmt.Fprintf(w, msg)
+    }
+    logger(r)
+}
+
 func rest(user, pass string, port int, use_ssl bool) {
     USER = user
     PASS = pass
@@ -65,6 +73,7 @@ func rest(user, pass string, port int, use_ssl bool) {
     router.HandleFunc("/door", Door).Methods("GET")
     router.HandleFunc("/door/close", Close).Methods("POST")
     router.HandleFunc("/door/open", Open).Methods("POST")
+    router.HandleFunc("/door/hold", Open).Methods("POST")
     if use_ssl {
         log.Fatal(http.ListenAndServeTLS(fmt.Sprintf(":%v", port), "server.crt", "server.key", router))
     } else {
