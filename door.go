@@ -11,7 +11,7 @@ import (
 var open_time time.Time = time.Time{}
 
 //whether or not the autoclose feature is temporarily disabled
-var holding = false;
+var holding = false
 
 var control_pin rpio.Pin
 var sensor_pin rpio.Pin
@@ -55,8 +55,8 @@ func status() bool {
         }
         return true
     } else {
-        open_time = time.Time{}
-        holding = false;
+        open_time = time.Time{} //reset to 0
+        holding = false
         return false
     }
 }
@@ -73,7 +73,11 @@ func monitor(autoclose bool, closetime float64) {
 
 func check_door() string {
     if status() {
-        return fmt.Sprintf("Door has been Open for %v", time.Now().Round(time.Second).Sub(open_time))
+        if holding {
+            return fmt.Sprintf("Door has been Holding for %v\n", time.Now().Round(time.Second).Sub(open_time))
+        } else {
+            return fmt.Sprintf("Door has been Open for %v\n", time.Now().Round(time.Second).Sub(open_time))
+        }
     } else {
         return "Door is Closed"
     }
@@ -98,10 +102,10 @@ func close_door() string {
 }
 
 func hold_door() string {
-    holding = true
     if !is_open() {
         return "Door is already Closed"
     } else {
+        holding = true
         return "Holding until manually closed..."
     }
 }
