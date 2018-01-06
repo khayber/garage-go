@@ -3,61 +3,86 @@ package main
 import (
     "log"
     "time"
-    "github.com/tucnak/telebot"
+    tb "gopkg.in/tucnak/telebot.v2"
 )
 
 func tgbot(token string, username string) {
-    bot, err := telebot.NewBot(token)
+    bot, err := tb.NewBot(tb.Settings{
+                Token: token,
+                Poller: &tb.LongPoller{10 * time.Second, -1}})
     if err != nil {
         log.Panic(err)
     }
 
-    log.Printf("Authorized on account %v", bot.Identity)
+    log.Printf("Authorized on account %v", bot.Me)
 
-    messages := make(chan telebot.Message, 100)
-    bot.Listen(messages, 60 * time.Second)
-
-    for message := range messages {
-        if DEBUG {
-            log.Printf("messsage %v", message)
-        }
-
-        log.Printf("[%s] %s", message.Sender.Username, message.Text)
-        if message.Sender.Username != username {
-            log.Printf("ERROR invalid user")
-            continue;
-        }
-        switch cmd := message.Text; cmd {
-            case "/start":
-                bot.SendMessage(message.Chat, "Welcome", &telebot.SendOptions{
-                    ReplyMarkup: telebot.ReplyMarkup{
-                        ForceReply: true,
-                        Selective: true,
-                        CustomKeyboard: [][]string{
-                            []string{"/status"},
-                            []string{"/open"},
-                            []string{"/close"},
-                            []string{"/hold"},
-                        },
-                    },
-                })
-            case "/status":
-                msg := check_door()
-                bot.SendMessage(message.Chat, msg, nil)
-            case "/open":
-                msg := open_door()
-                bot.SendMessage(message.Chat, msg, nil)
-            case "/close":
-                msg := close_door()
-                bot.SendMessage(message.Chat, msg, nil)
-            case "/hold":
-                msg := hold_door()
-                bot.SendMessage(message.Chat, msg, nil)
-            default:
-                msg := "huh???"
-                bot.SendMessage(message.Chat, msg, &telebot.SendOptions{
-                    ReplyTo: message,
-                })
-        }
+    // This button will be displayed in user's
+    // reply keyboard.
+    statusBtn := tb.ReplyButton{Text: "Status"}
+    holdBtn := tb.ReplyButton{Text: "Hold"}
+    openBtn := tb.ReplyButton{Text: "Open"}
+    closeBtn := tb.ReplyButton{Text: "Close"}
+    replyKeys := [][]tb.ReplyButton{
+        []tb.ReplyButton{statusBtn},
+        []tb.ReplyButton{holdBtn},
+        []tb.ReplyButton{openBtn},
+        []tb.ReplyButton{closeBtn},
     }
+
+    // And this one — just under the message itself.
+    // Pressing it will cause the client to send
+    // the bot a callback.
+    //
+    // Make sure Unique stays unique as it has to be
+    // for callback routing to work.
+    inlineBtn := tb.InlineButton{
+        Unique: "sad_moon",
+        Text: "🌚 Button #2",
+    }
+    inlineKeys := [][]tb.InlineButton{
+        []tb.InlineButton{inlineBtn},
+        // ...
+    }
+
+    bot.Handle(&inlineBtn, func(c *tb.Callback) {
+        log.Printf("callback %v", c)
+        // on inline button pressed (callback!)
+
+        // always respond!
+        // b.Respond(c, &tb.CallbackResponse{...})
+    })
+
+    // Command: /start <PAYLOAD>
+    bot.Handle("/start", func(m *tb.Message) {
+        if !m.Private() {
+            return
+        }
+
+        bot.Send(m.Sender, "Hello!", &tb.ReplyMarkup{
+            ReplyKeyboard:  replyKeys,
+            InlineKeyboard: inlineKeys,
+        })
+    })
+
+    bot.Handle(&statusBtn, func(m *tb.Message) {
+        log.Printf("messsage %v %v", m.Text, m.Sender)
+        bot.Send(m.Sender, check_door() )
+    })
+
+    bot.Handle(&openBtn, func(m *tb.Message) {
+        log.Printf("messsage %v %v", m.Text, m.Sender)
+        bot.Send(m.Sender, open_door() )
+    })
+
+    bot.Handle(&closeBtn, func(m *tb.Message) {
+        log.Printf("messsage %v %v", m.Text, m.Sender)
+        bot.Send(m.Sender, close_door() )
+    })
+
+    bot.Handle(&holdBtn, func(m *tb.Message) {
+        log.Printf("messsage %v %v", m.Text, m.Sender)
+        bot.Send(m.Sender, hold_door() )
+    })
+
+    bot.Start()
 }
