@@ -16,10 +16,10 @@ func tgbot(token string, username string) {
 
     log.Printf("Authorized on account %v", bot.Me)
 
-    iStatusBtn := tb.InlineButton{Unique: "status", Text: "Status"}
-    iOpenBtn := tb.InlineButton{Unique: "open", Text: "Open"}
-    iCloseBtn := tb.InlineButton{Unique: "close", Text: "Close"}
-    iHoldBtn := tb.InlineButton{Unique: "hold", Text: "Hold"}
+    iStatusBtn := tb.InlineButton{Unique: "status", Text: "❓Status"}
+    iOpenBtn := tb.InlineButton{Unique: "open", Text: "👍 Open"}
+    iCloseBtn := tb.InlineButton{Unique: "close", Text: "👎 Close"}
+    iHoldBtn := tb.InlineButton{Unique: "hold", Text: "✊ Hold"}
     iOpenKeys := [][]tb.InlineButton{
         []tb.InlineButton{iStatusBtn, iCloseBtn, iHoldBtn},
     }
