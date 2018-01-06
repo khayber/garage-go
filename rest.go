@@ -36,7 +36,7 @@ func logger(r *http.Request) {
 
 func Door(w http.ResponseWriter, r *http.Request) {
     if authenticate(w, r) {
-        msg := check_door()
+        msg, _ := check_door()
         fmt.Fprintf(w, msg)
     }
     logger(r)
@@ -44,7 +44,7 @@ func Door(w http.ResponseWriter, r *http.Request) {
 
 func Open(w http.ResponseWriter, r *http.Request) {
     if authenticate(w, r) {
-        msg := open_door()
+        msg, _ := open_door()
         fmt.Fprintf(w, msg)
     }
     logger(r)
@@ -52,7 +52,7 @@ func Open(w http.ResponseWriter, r *http.Request) {
 
 func Close(w http.ResponseWriter, r *http.Request) {
     if authenticate(w, r) {
-        msg := close_door()
+        msg, _ := close_door()
         fmt.Fprintf(w, msg)
     }
     logger(r)
@@ -60,7 +60,7 @@ func Close(w http.ResponseWriter, r *http.Request) {
 
 func Hold(w http.ResponseWriter, r *http.Request) {
     if authenticate(w, r) {
-        msg := hold_door()
+        msg, _ := hold_door()
         fmt.Fprintf(w, msg)
     }
     logger(r)

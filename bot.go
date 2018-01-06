@@ -16,72 +16,65 @@ func tgbot(token string, username string) {
 
     log.Printf("Authorized on account %v", bot.Me)
 
-    // This button will be displayed in user's
-    // reply keyboard.
-    statusBtn := tb.ReplyButton{Text: "Status"}
-    holdBtn := tb.ReplyButton{Text: "Hold"}
-    openBtn := tb.ReplyButton{Text: "Open"}
-    closeBtn := tb.ReplyButton{Text: "Close"}
-    replyKeys := [][]tb.ReplyButton{
-        []tb.ReplyButton{statusBtn},
-        []tb.ReplyButton{holdBtn},
-        []tb.ReplyButton{openBtn},
-        []tb.ReplyButton{closeBtn},
+    iStatusBtn := tb.InlineButton{Unique: "status", Text: "Status"}
+    iOpenBtn := tb.InlineButton{Unique: "open", Text: "Open"}
+    iCloseBtn := tb.InlineButton{Unique: "close", Text: "Close"}
+    iHoldBtn := tb.InlineButton{Unique: "hold", Text: "Hold"}
+    iOpenKeys := [][]tb.InlineButton{
+        []tb.InlineButton{iStatusBtn, iCloseBtn, iHoldBtn},
+    }
+    iClosedKeys := [][]tb.InlineButton{
+        []tb.InlineButton{iStatusBtn, iOpenBtn},
     }
 
-    // And this one — just under the message itself.
-    // Pressing it will cause the client to send
-    // the bot a callback.
-    //
-    // Make sure Unique stays unique as it has to be
-    // for callback routing to work.
-    inlineBtn := tb.InlineButton{
-        Unique: "sad_moon",
-        Text: "🌚 Button #2",
-    }
-    inlineKeys := [][]tb.InlineButton{
-        []tb.InlineButton{inlineBtn},
-        // ...
-    }
-
-    bot.Handle(&inlineBtn, func(c *tb.Callback) {
-        log.Printf("callback %v", c)
-        // on inline button pressed (callback!)
-
-        // always respond!
-        // b.Respond(c, &tb.CallbackResponse{...})
+    bot.Handle(&iStatusBtn, func(c *tb.Callback) {
+        log.Printf("Status %v", c.Sender)
+        bot.Respond(c, &tb.CallbackResponse{c.ID, "", false, ""})
+        msg, status := check_door();
+        if status {
+            bot.Edit(c.Message, msg, &tb.ReplyMarkup{InlineKeyboard: iOpenKeys})
+        } else {
+            bot.Edit(c.Message, msg, &tb.ReplyMarkup{InlineKeyboard: iClosedKeys})
+        }
     })
 
-    // Command: /start <PAYLOAD>
+    bot.Handle(&iOpenBtn, func(c *tb.Callback) {
+        log.Printf("Open %v", c.Sender)
+        bot.Respond(c, &tb.CallbackResponse{c.ID, "", false, ""})
+        msg, _ := open_door()
+        bot.Edit(c.Message, msg, &tb.ReplyMarkup{InlineKeyboard: iOpenKeys})
+    })
+
+    bot.Handle(&iCloseBtn, func(c *tb.Callback) {
+        log.Printf("Close %v", c.Sender)
+        bot.Respond(c, &tb.CallbackResponse{c.ID, "", false, ""})
+        msg, _ := close_door()
+        bot.Edit(c.Message, msg, &tb.ReplyMarkup{InlineKeyboard: iClosedKeys})
+    })
+
+    bot.Handle(&iHoldBtn, func(c *tb.Callback) {
+        log.Printf("Hold %v", c.Sender)
+        bot.Respond(c, &tb.CallbackResponse{c.ID, "", false, ""})
+        msg, status := hold_door()
+        if status {
+            bot.Edit(c.Message, msg, &tb.ReplyMarkup{InlineKeyboard: iOpenKeys})
+        } else {
+            bot.Edit(c.Message, msg, &tb.ReplyMarkup{InlineKeyboard: iClosedKeys})
+        }
+    })
+
     bot.Handle("/start", func(m *tb.Message) {
         if !m.Private() {
             return
         }
 
-        bot.Send(m.Sender, "Hello!", &tb.ReplyMarkup{
-            ReplyKeyboard:  replyKeys,
-            InlineKeyboard: inlineKeys,
+        msg, status := check_door()
+
+        bot.Send(m.Sender, "Hello! " + msg, &tb.ReplyMarkup{
+            InlineKeyboard: func() [][]tb.InlineButton {
+                if status {return iOpenKeys} else { return iClosedKeys }
+            }(),
         })
-    })
-
-    bot.Handle(&statusBtn, func(m *tb.Message) {
-        log.Printf("messsage %v %v", m.Text, m.Sender)
-        bot.Send(m.Sender, check_door() )
-    })
-
-    bot.Handle(&openBtn, func(m *tb.Message) {
-        log.Printf("messsage %v %v", m.Text, m.Sender)
-        bot.Send(m.Sender, open_door() )
-    })
-
-    bot.Handle(&closeBtn, func(m *tb.Message) {
-        log.Printf("messsage %v %v", m.Text, m.Sender)
-        bot.Send(m.Sender, close_door() )
-    })
-
-    bot.Handle(&holdBtn, func(m *tb.Message) {
-        log.Printf("messsage %v %v", m.Text, m.Sender)
-        bot.Send(m.Sender, hold_door() )
     })
 
     bot.Start()

@@ -71,41 +71,41 @@ func monitor(autoclose bool, closetime float64) {
     }
 }
 
-func check_door() string {
+func check_door() (string, bool) {
     if status() {
         if holding {
-            return fmt.Sprintf("Door has been Holding for %v\n", time.Now().Round(time.Second).Sub(open_time))
+            return fmt.Sprintf("Door has been Holding for %v\n", time.Now().Round(time.Second).Sub(open_time)), true
         } else {
-            return fmt.Sprintf("Door has been Open for %v\n", time.Now().Round(time.Second).Sub(open_time))
+            return fmt.Sprintf("Door has been Open for %v\n", time.Now().Round(time.Second).Sub(open_time)), true
         }
     } else {
-        return "Door is Closed"
+        return "Door is Closed", false
     }
 }
 
-func open_door() string {
+func open_door() (string, bool) {
     if is_open() {
-        return "Door is already Open"
+        return "Door is already Open", true
     } else {
         toggle_door()
-        return "Opening..."
+        return "Opening...", false
     }
 }
 
-func close_door() string {
+func close_door() (string, bool) {
     if !is_open() {
-        return "Door is already Closed"
+        return "Door is already Closed", false
     } else {
         toggle_door()
-        return "Closing..."
+        return "Closing...", true
     }
 }
 
-func hold_door() string {
+func hold_door() (string, bool) {
     if !is_open() {
-        return "Door is already Closed"
+        return "Door is already Closed", false
     } else {
         holding = true
-        return "Holding until manually closed..."
+        return "Holding until manually closed...", true
     }
 }
