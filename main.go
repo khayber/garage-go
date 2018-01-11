@@ -29,17 +29,20 @@ func main() {
     DEBUG = *debug
     var wg sync.WaitGroup
 
-    setup(*gpio_control_pin, *gpio_sensor_pin)
-    defer cleanup()
-
-    go monitor(*monitor_autoclose, *monitor_closetime)
-
+    door, _ := NewDoor(*gpio_control_pin, *gpio_sensor_pin)
+    if *monitor_autoclose {
+        go door.monitor(*monitor_closetime)
+        wg.Add(1)
+    }
     if *telegram_enable {
-        go tgbot(*telegram_token, *telegram_user)
+        bot, _ := NewMyBot(door, *telegram_token, *telegram_user)
+        go bot.Start()
         wg.Add(1) //make sure we don't exit if the rest server isn't configured
     }
     if *rest_enable {
-        rest(*rest_user, *rest_pass, *rest_port, *rest_ssl)
+        rest, _ := NewRestService(door, *rest_user, *rest_pass, *rest_port, *rest_ssl)
+        go rest.Listen()
+        wg.Add(1)
     }
 
     wg.Wait()

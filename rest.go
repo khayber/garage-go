@@ -10,17 +10,48 @@ import (
 )
 
 
-var USER = ""
-var PASS = ""
+type RestService struct {
+    user string
+    pass string
+    port int
+    use_ssl bool
+    door *Door
+    router *mux.Router
+}
 
-func authenticate(w http.ResponseWriter, r *http.Request) bool {
+func NewRestService(door *Door, user, pass string, port int, use_ssl bool) (*RestService, error) {
+    rest := &RestService{
+        user: user,
+        pass: pass,
+        use_ssl: use_ssl,
+        port: port,
+        door: door,
+        router: mux.NewRouter().StrictSlash(true),
+    }
+    rest.router.HandleFunc("/door", rest.Status).Methods("GET")
+    rest.router.HandleFunc("/door/close", rest.Close).Methods("POST")
+    rest.router.HandleFunc("/door/open", rest.Open).Methods("POST")
+    rest.router.HandleFunc("/door/hold", rest.Hold).Methods("POST")
+    return rest, nil
+}
+
+
+func (rest *RestService) Listen() {
+        if rest.use_ssl {
+        log.Fatal(http.ListenAndServeTLS(fmt.Sprintf(":%v", rest.port), "server.crt", "server.key", rest.router))
+    } else {
+        log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", rest.port), rest.router))
+    }
+}
+
+func (rest *RestService) authenticate(w http.ResponseWriter, r *http.Request) bool {
     auth_header := r.Header["Authorization"]
     if len(auth_header) > 0 {
         auth := strings.SplitN(auth_header[0], " ", 2)
         if len(auth) == 2 && auth[0] == "Basic" {
             payload, _ := base64.StdEncoding.DecodeString(auth[1])
             pair := strings.SplitN(string(payload), ":", 2)
-            if len(pair) == 2 && pair[0] == USER && pair[1] == PASS {
+            if len(pair) == 2 && pair[0] == rest.user && pair[1] == rest.pass {
                 return true
             }
         }
@@ -34,50 +65,38 @@ func logger(r *http.Request) {
     log.Printf("%s    %s", r.Method, r.RequestURI)
 }
 
-func Door(w http.ResponseWriter, r *http.Request) {
-    if authenticate(w, r) {
-        msg, _ := check_door()
+func (rest *RestService) Status(w http.ResponseWriter, r *http.Request) {
+    if rest.authenticate(w, r) {
+        msg, _ := rest.door.check()
         fmt.Fprintf(w, msg)
     }
     logger(r)
 }
 
-func Open(w http.ResponseWriter, r *http.Request) {
-    if authenticate(w, r) {
-        msg, _ := open_door()
+func (rest *RestService) Open(w http.ResponseWriter, r *http.Request) {
+    if rest.authenticate(w, r) {
+        for msg := range rest.door.open() {
+            fmt.Fprintf(w, msg)
+        }
+    }
+    logger(r)
+}
+
+func (rest *RestService) Close(w http.ResponseWriter, r *http.Request) {
+    if rest.authenticate(w, r) {
+        for msg := range rest.door.close() {
+            fmt.Fprintf(w, msg)
+        }
+    }
+    logger(r)
+}
+
+func (rest *RestService) Hold(w http.ResponseWriter, r *http.Request) {
+    if rest.authenticate(w, r) {
+        msg, _ := rest.door.hold()
         fmt.Fprintf(w, msg)
     }
     logger(r)
 }
 
-func Close(w http.ResponseWriter, r *http.Request) {
-    if authenticate(w, r) {
-        msg, _ := close_door()
-        fmt.Fprintf(w, msg)
-    }
-    logger(r)
-}
-
-func Hold(w http.ResponseWriter, r *http.Request) {
-    if authenticate(w, r) {
-        msg, _ := hold_door()
-        fmt.Fprintf(w, msg)
-    }
-    logger(r)
-}
-
-func rest(user, pass string, port int, use_ssl bool) {
-    USER = user
-    PASS = pass
-    router := mux.NewRouter().StrictSlash(true)
-    router.HandleFunc("/door", Door).Methods("GET")
-    router.HandleFunc("/door/close", Close).Methods("POST")
-    router.HandleFunc("/door/open", Open).Methods("POST")
-    router.HandleFunc("/door/hold", Open).Methods("POST")
-    if use_ssl {
-        log.Fatal(http.ListenAndServeTLS(fmt.Sprintf(":%v", port), "server.crt", "server.key", router))
-    } else {
-        log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), router))
-    }
-}
 

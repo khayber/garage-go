@@ -7,105 +7,162 @@ import (
     "github.com/stianeikeland/go-rpio"
 )
 
-// time we detected door open
-var open_time time.Time = time.Time{}
+var FAKE = false
 
-//whether or not the autoclose feature is temporarily disabled
-var holding = false
+type State int
+const (
+    unknown State = iota
+    closed
+    closing
+    open
+    opening
+    holding
+)
 
-var control_pin rpio.Pin
-var sensor_pin rpio.Pin
+type Door struct {
+    state State
+    // time we detected door open
+    open_time time.Time
 
-func setup(control_pin_num, sensor_pin_num int) {
-    rpio.Open()
-    control_pin = rpio.Pin(control_pin_num)
-    control_pin.Output()
-
-    sensor_pin = rpio.Pin(sensor_pin_num)
-    sensor_pin.Input()
-    sensor_pin.PullUp()
+    control_pin rpio.Pin
+    sensor_pin rpio.Pin
 }
 
-func cleanup() {
+func NewDoor(control_pin_num, sensor_pin_num int) (*Door, error) {
+    err := rpio.Open()
+    door := &Door {
+        open_time: time.Time{},
+        state: unknown,
+        control_pin: rpio.Pin(control_pin_num),
+        sensor_pin: rpio.Pin(sensor_pin_num),
+    }
+    if err == nil {
+        door.control_pin.Output()
+        door.sensor_pin.Input()
+        door.sensor_pin.PullUp()
+        defer door.cleanup()
+    } else {
+        FAKE = true
+        log.Printf("FAKE!!!")
+    }
+
+    return door, nil
+}
+
+func (door *Door) cleanup() {
+    if FAKE {return}
     rpio.Close()
 }
 
-func toggle_door() {
+func (door *Door) toggle() {
     log.Printf("toggle_door")
-    control_pin.Low()
+    if FAKE {return}
+    door.control_pin.Low()
     time.Sleep(1000 * time.Millisecond)
-    control_pin.High()
+    door.control_pin.High()
 }
 
-func is_open() bool {
-    return sensor_pin.Read() == rpio.Low
-}
-
-func status() bool {
-    if is_open() {
-        if DEBUG {
-            if holding {
-                fmt.Printf("Door has been Holding for %v\n", time.Now().Round(time.Second).Sub(open_time))
-            } else {
-                fmt.Printf("Door has been Open for %v\n", time.Now().Round(time.Second).Sub(open_time))
-            }
+func (door *Door) is_open() bool {
+    if FAKE {
+        switch door.state {
+        case open:
+            return true
+        case opening:
+            door.state = open
+            return false
+        case closed:
+            return false
+        case closing:
+            door.state = closed
+            return false
+        case holding:
+            return true
+        case unknown:
+            return false
         }
-        if open_time.IsZero() {
-            open_time = time.Now().Round(time.Second)
+    }
+    return door.sensor_pin.Read() == rpio.Low
+}
+
+func (door *Door) status() bool {
+    if door.is_open() {
+        if door.open_time.IsZero() {
+            door.open_time = time.Now().Round(time.Second)
         }
         return true
     } else {
-        open_time = time.Time{} //reset to 0
-        holding = false
+        door.open_time = time.Time{} //reset to 0
         return false
     }
 }
 
-func monitor(autoclose bool, closetime float64) {
+func (door *Door) monitor(closetime float64) {
     for true {
-        if status() && (time.Since(open_time).Minutes() > closetime && autoclose && !holding) {
+        if door.status() && (time.Since(door.open_time).Minutes() > closetime && door.state != holding) {
             log.Printf("Door has been open too long, auto-closing.")
-            toggle_door()
+            door.toggle()
         }
         time.Sleep(20000 * time.Millisecond)
     }
 }
 
-func check_door() (string, bool) {
-    if status() {
-        if holding {
-            return fmt.Sprintf("Door has been Holding for %v\n", time.Now().Round(time.Second).Sub(open_time)), true
+func (door *Door) check() (string, bool) {
+    if door.status() {
+        duration := time.Now().Round(time.Second).Sub(door.open_time)
+        if door.state == holding {
+            return fmt.Sprintf("Door has been Holding for %v\n", duration), true
         } else {
-            return fmt.Sprintf("Door has been Open for %v\n", time.Now().Round(time.Second).Sub(open_time)), true
+            return fmt.Sprintf("Door has been Open for %v\n", duration), true
         }
     } else {
         return "Door is Closed", false
     }
 }
 
-func open_door() (string, bool) {
-    if is_open() {
-        return "Door is already Open", true
-    } else {
-        toggle_door()
-        return "Opening...", false
-    }
+func (door *Door) open() chan string {
+    c := make(chan string)
+    go func(c chan string) {
+        if door.is_open() {
+            c <- "Open"
+        } else {
+            door.state = opening
+            c <- "Opening"
+            door.toggle()
+            for !door.is_open() {
+                time.Sleep(1000 * time.Millisecond)
+            }
+            c <- "Open"
+        }
+        close(c)
+    } (c)
+    return c
 }
 
-func close_door() (string, bool) {
-    if !is_open() {
-        return "Door is already Closed", false
-    } else {
-        toggle_door()
-        return "Closing...", true
-    }
+func (door *Door) close() chan string {
+    c := make(chan string)
+    go func(c chan string) {
+        if !door.is_open() {
+            c <- "Closed"
+        } else {
+            door.state = closing
+            c <- "Closing..."
+            door.toggle()
+            for door.is_open() {
+                time.Sleep(1000 * time.Millisecond)
+            }
+            door.state = closed
+            c <- "Closed"
+        }
+        close(c)
+    } (c)
+    return c
 }
 
-func hold_door() (string, bool) {
-    if !is_open() {
-        return "Door is already Closed", false
+func (door *Door) hold() (string, bool) {
+    if !door.is_open() {
+        return "Closed", true
     } else {
-        holding = true
-        return "Holding until manually closed...", true
+        door.state = holding
+        return "Holding", false
     }
 }
