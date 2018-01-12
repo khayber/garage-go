@@ -131,6 +131,7 @@ func (door *Door) open() chan string {
             for !door.is_open() {
                 time.Sleep(1000 * time.Millisecond)
             }
+            door.state = open
             c <- "Open"
         }
         close(c)
