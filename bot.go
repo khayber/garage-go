@@ -12,8 +12,35 @@ type MyBot struct {
     message *tb.Message
 }
 
-func NewMyBot(door *Door, token string, username string) (*MyBot, error) {
+var iStatusBtn tb.InlineButton
+var iOpenBtn tb.InlineButton
+var iCloseBtn tb.InlineButton
+var iHoldBtn tb.InlineButton
+var iOpenKeys [][]tb.InlineButton
+var iClosedKeys [][]tb.InlineButton
 
+func getKeys(isOpen bool) [][]tb.InlineButton {
+    if isOpen {
+        return iOpenKeys
+    } else {
+        return iClosedKeys
+    }
+}
+
+func initKeys() {
+    iStatusBtn = tb.InlineButton{Unique: "status", Text: "❓ Status"}
+    iOpenBtn = tb.InlineButton{Unique: "open", Text: "👍 Open"}
+    iCloseBtn = tb.InlineButton{Unique: "close", Text: "👎 Close"}
+    iHoldBtn = tb.InlineButton{Unique: "hold", Text: "✊ Hold"}
+    iOpenKeys = [][]tb.InlineButton{
+        []tb.InlineButton{iStatusBtn, iCloseBtn, iHoldBtn},
+    }
+    iClosedKeys = [][]tb.InlineButton{
+        []tb.InlineButton{iStatusBtn, iOpenBtn},
+    }
+}
+
+func NewMyBot(door *Door, token string, username string) (*MyBot, error) {
     mybot := &MyBot{}
 
     bot, err := tb.NewBot(tb.Settings{
@@ -26,16 +53,7 @@ func NewMyBot(door *Door, token string, username string) (*MyBot, error) {
 
     log.Printf("Authorized on account %v", bot.Me)
 
-    iStatusBtn := tb.InlineButton{Unique: "status", Text: "❓ Status"}
-    iOpenBtn := tb.InlineButton{Unique: "open", Text: "👍 Open"}
-    iCloseBtn := tb.InlineButton{Unique: "close", Text: "👎 Close"}
-    iHoldBtn := tb.InlineButton{Unique: "hold", Text: "✊ Hold"}
-    iOpenKeys := [][]tb.InlineButton{
-        []tb.InlineButton{iStatusBtn, iCloseBtn, iHoldBtn},
-    }
-    iClosedKeys := [][]tb.InlineButton{
-        []tb.InlineButton{iStatusBtn, iOpenBtn},
-    }
+    initKeys()
 
     bot.Handle(&iStatusBtn, func(c *tb.Callback) {
         log.Printf("Status %v", c.Sender)
@@ -67,31 +85,20 @@ func NewMyBot(door *Door, token string, username string) (*MyBot, error) {
     bot.Handle(&iHoldBtn, func(c *tb.Callback) {
         log.Printf("Hold %v", c.Sender)
         bot.Respond(c, &tb.CallbackResponse{c.ID, "", false, ""})
-        msg, status := door.hold()
-        if status {
-            bot.Edit(c.Message, msg, &tb.ReplyMarkup{InlineKeyboard: iOpenKeys})
-        } else {
-            bot.Edit(c.Message, msg, &tb.ReplyMarkup{InlineKeyboard: iClosedKeys})
-        }
+        msg, isOpen := door.hold()
+        bot.Edit(c.Message, msg, &tb.ReplyMarkup{InlineKeyboard: getKeys(isOpen)})
     })
 
     bot.Handle("/start", func(m *tb.Message) {
         if !m.Private() {
             return
         }
-
-        msg, status := door.check()
-
-        bot.Send(m.Sender, "Hello! " + msg, &tb.ReplyMarkup{
-            InlineKeyboard: func() [][]tb.InlineButton {
-                if status {return iOpenKeys} else { return iClosedKeys }
-            }(),
-        })
+        msg, isOpen := door.check()
+        bot.Send(m.Sender, "Hello! " + msg, &tb.ReplyMarkup{InlineKeyboard: getKeys(isOpen)})
     })
 
     return mybot, nil
 }
-
 
 func (bot *MyBot) Start() {
     bot.bot.Start()

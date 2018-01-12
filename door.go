@@ -160,9 +160,9 @@ func (door *Door) close() chan string {
 
 func (door *Door) hold() (string, bool) {
     if !door.is_open() {
-        return "Closed", true
+        return "Closed", false
     } else {
         door.state = holding
-        return "Holding", false
+        return "Holding", true
     }
 }
