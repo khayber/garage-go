@@ -32,6 +32,7 @@ func main() {
     door, _ := NewDoor(*gpio_control_pin, *gpio_sensor_pin)
     if *monitor_autoclose {
         go door.monitor(*monitor_closetime)
+        defer door.cleanup()
         wg.Add(1)
     }
     if *telegram_enable {

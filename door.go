@@ -40,7 +40,6 @@ func NewDoor(control_pin_num, sensor_pin_num int) (*Door, error) {
         door.control_pin.Output()
         door.sensor_pin.Input()
         door.sensor_pin.PullUp()
-        defer door.cleanup()
     } else {
         FAKE = true
         log.Printf("FAKE!!!")
