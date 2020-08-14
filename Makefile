@@ -1,4 +1,5 @@
-export GOPATH=${PWD}
+#export GOPATH=${PWD}
+#export GOPATH=/Users/ken/Projects/go
 
 all: get build
 
@@ -22,4 +23,4 @@ clean:
 	go clean
 
 purge: clean
-	-rm -rf src 
+	-rm -rf src
